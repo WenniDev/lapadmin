@@ -1,0 +1,450 @@
+{% extends "base.html.j2" %}
+
+{% block styles %}
+<style>
+    .copy-source {
+        position: absolute;
+        left: -9999px;
+    }
+
+    .streams-grid {
+        display: flex;
+        flex-direction: column;
+        gap: 1em;
+    }
+
+    .streams-grid .box {
+        margin: 0;
+        width: 100%;
+    }
+
+    .stream-sections {
+        display: flex;
+        gap: 2em;
+    }
+
+    .stream-section {
+        flex: 0 1 320px;
+        min-width: 0;
+    }
+
+    .copy-button {
+        height: auto;
+        min-height: 36px;
+        line-height: 1.2;
+        padding-top: 8px;
+        padding-bottom: 8px;
+        white-space: normal;
+    }
+
+    .stream-status-badge {
+        text-transform: uppercase;
+        font-size: 0.75em;
+        white-space: nowrap;
+    }
+
+    .stream-status-line,
+    .obs-status {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.4em;
+    }
+
+    .box.stream-is-live {
+        border-left: 4px solid #4CAF50;
+    }
+
+    .obs-status-badge {
+        text-transform: uppercase;
+        font-size: 0.75em;
+        background-color: #9e9e9e;
+        white-space: nowrap;
+    }
+
+    .obs-status-badge.obs-active {
+        background-color: #4CAF50;
+    }
+
+    .stream-section-label {
+        font-size: 0.7em;
+        color: #999;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin-bottom: 0.5em;
+        font-weight: 600;
+    }
+
+    .stream-section + .stream-section {
+        border-left: 1px solid #eee;
+        padding-left: 2em;
+    }
+
+    .stream-embed-section {
+        flex: 1 1 300px;
+    }
+
+    .stream-embed {
+        position: relative;
+        width: 100%;
+        padding-top: 56.25%;
+        background: #000;
+    }
+
+    .stream-embed iframe {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        border: 0;
+    }
+</style>
+{% endblock styles %}
+
+{% block content %}
+
+<div class="container">
+    <h1>Streams</h1>
+
+    {% if not streams_ready %}
+    <div class="card-panel orange lighten-4">
+        Google/YouTube n'est pas configuré (fichier <code>keys/client_secret.json</code> manquant).
+    </div>
+    {% endif %}
+
+    <p>
+        <button type="button" id="streams-start-all" class="btn green waves-effect waves-light">
+            <i class="material-icons left">play_arrow</i>
+            Tout lancer
+        </button>
+        <button type="button" id="streams-stop-all" class="btn red waves-effect waves-light">
+            <i class="material-icons left">stop</i>
+            Tout arrêter
+        </button>
+        <button type="button" id="streams-multistream" class="btn blue waves-effect waves-light">
+            <i class="material-icons left">open_in_new</i>
+            Multistream
+        </button>
+    </p>
+
+    <div class="streams-grid">
+        {% for entry in games %}
+            <div
+                class="box {{ 'stream-is-live' if entry.broadcast and entry.broadcast.status == 'live' else '' }}"
+                data-game="{{ entry.game.game }}"
+                data-broadcast-id="{{ entry.broadcast.id if entry.broadcast else '' }}"
+            >
+                <h5>{{ entry.game.game }}</h5>
+
+                {% if entry.error %}
+                <div class="card-panel red lighten-4">
+                    Erreur : {{ entry.error }}
+                </div>
+                {% else %}
+
+                <div class="stream-sections">
+                    <div class="stream-section">
+                        <div class="stream-section-label">Configuration</div>
+                        <p>
+                            <label>
+                                Visibilité
+                                <select class="browser-default privacy-select">
+                                    <option value="unlisted" {{ 'selected' if entry.game.unlisted }}>Non répertorié</option>
+                                    <option value="public" {{ 'selected' if not entry.game.unlisted }}>Public</option>
+                                    <option value="private">Privé</option>
+                                </select>
+                            </label>
+                        </p>
+                        {% if entry.live_stream %}
+                        <input type="text" class="copy-source" readonly value="{{ entry.live_stream.stream_key }}" tabindex="-1" aria-hidden="true">
+                        <p>
+                            <button type="button" class="btn waves-effect waves-light copy-button">
+                                <i class="material-icons left">content_copy</i>
+                                COPIER LA CLEF DE STREAM
+                            </button>
+                        </p>
+                        <p class="obs-status">
+                            Status d'OBS :
+                            <span
+                                class="badge obs-status-badge {{ 'obs-active' if entry.live_stream.is_active else '' }}"
+                                data-badge-caption=""
+                                title="{{ entry.live_stream.health_status_label or '' }}"
+                            >{{ entry.live_stream.stream_status_label }}</span>
+                        </p>
+                        {% else %}
+                        <a
+                            class="btn waves-effect waves-light"
+                            href="{{ url_for('.streams_create_live_stream', game=entry.game.game) }}"
+                        >
+                            <i class="material-icons left">add</i>
+                            Créer le live stream
+                        </a>
+                        {% endif %}
+                    </div>
+
+                    {% if entry.live_stream %}
+                    <div class="stream-section">
+                        <div class="stream-section-label">Diffusion</div>
+                        <div class="stream-status">
+                            {% if entry.broadcast %}
+                            <p class="stream-status-line">
+                                Status du Stream :
+                                <span class="badge stream-status-badge" data-badge-caption="" title="{{ entry.broadcast.status }}">{{ entry.broadcast.status_label }}</span>
+                                <span class="badge stream-status-badge" data-badge-caption="" title="{{ entry.broadcast.privacy }}">{{ entry.broadcast.privacy_label }}</span>
+                            </p>
+                            <p>
+                                <a href="{{ entry.broadcast.url }}" target="_blank" rel="noopener">
+                                    {{ entry.broadcast.url }}
+                                </a>
+                            </p>
+                            <p>
+                                <small>Créé le {{ entry.broadcast.published_at | arrow('format', 'DD/MM/YYYY HH:mm') }}</small>
+                            </p>
+                            {% else %}
+                            <p class="no-broadcast-message">Aucun stream programmé ni en cours.</p>
+                            {% endif %}
+                        </div>
+
+                        <p>
+                            <button
+                                type="button"
+                                class="btn stream-action-button {{ 'red' if entry.broadcast and entry.broadcast.status == 'live' else 'green' }} waves-effect waves-light"
+                                data-action="{{ 'stop' if entry.broadcast and entry.broadcast.status == 'live' else 'start' }}"
+                            >
+                                <i class="material-icons left">{{ 'stop' if entry.broadcast and entry.broadcast.status == 'live' else 'play_arrow' }}</i>
+                                <span class="stream-action-label">{{ 'Arrêter' if entry.broadcast and entry.broadcast.status == 'live' else 'Lancer' }}</span>
+                            </button>
+                        </p>
+                    </div>
+                    {% endif %}
+
+                    {% if entry.broadcast and entry.broadcast.status == 'live' %}
+                    <div class="stream-section stream-embed-section">
+                        <div class="stream-embed">
+                            <iframe src="https://www.youtube.com/embed/{{ entry.broadcast.id }}" allowfullscreen></iframe>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+        {% endfor %}
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    for (const button of document.querySelectorAll('.copy-button')) {
+        button.addEventListener('click', () => {
+            const input = button.closest('.box').querySelector('.copy-source');
+
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(input.value)
+                    .then(() => M.toast({html: 'Copié !'}))
+                    .catch(() => fallbackCopy());
+            } else {
+                fallbackCopy();
+            }
+
+            function fallbackCopy() {
+                // navigator.clipboard requires a secure context (HTTPS or
+                // localhost) - falls back to the legacy copy command when
+                // accessed over plain HTTP (e.g. from the LAN IP). Browsers
+                // silently copy an empty string from type="password" fields,
+                // so briefly reveal the value to make the real copy work.
+                const originalType = input.type;
+                input.type = 'text';
+                input.select();
+                input.setSelectionRange(0, 99999);
+
+                try {
+                    document.execCommand('copy');
+                    M.toast({html: 'Copié !'});
+                } catch (e) {
+                    M.toast({html: 'Impossible de copier automatiquement, sélectionnez et copiez avec Ctrl+C'});
+                } finally {
+                    input.type = originalType;
+                }
+            }
+        });
+    }
+
+    function renderStatus(box, data) {
+        const broadcast = data && data.broadcast;
+        const liveStream = data && data.live_stream;
+        const statusEl = box.querySelector('.stream-status');
+        const button = box.querySelector('.stream-action-button');
+        const label = button.querySelector('.stream-action-label');
+        const icon = button.querySelector('.material-icons');
+        const obsEl = box.querySelector('.obs-status');
+
+        if (broadcast) {
+            const publishedAt = new Date(broadcast.published_at).toLocaleString('fr-FR');
+            statusEl.innerHTML = `
+                <p class="stream-status-line">
+                    Status du Stream :
+                    <span class="badge stream-status-badge" data-badge-caption="" title="${broadcast.status}">${broadcast.status_label}</span>
+                    <span class="badge stream-status-badge" data-badge-caption="" title="${broadcast.privacy}">${broadcast.privacy_label}</span>
+                </p>
+                <p>
+                    <a href="${broadcast.url}" target="_blank" rel="noopener">${broadcast.url}</a>
+                </p>
+                <p>
+                    <small>Créé le ${publishedAt}</small>
+                </p>
+            `;
+        } else {
+            statusEl.innerHTML = '<p class="no-broadcast-message">Aucun stream programmé ni en cours.</p>';
+        }
+
+        if (obsEl && liveStream) {
+            obsEl.innerHTML = `
+                Status d'OBS :
+                <span
+                    class="badge obs-status-badge ${liveStream.is_active ? 'obs-active' : ''}"
+                    data-badge-caption=""
+                    title="${liveStream.health_status_label || ''}"
+                >${liveStream.stream_status_label}</span>
+            `;
+        }
+
+        const isLive = broadcast && broadcast.status === 'live';
+        box.classList.toggle('stream-is-live', isLive);
+        box.dataset.broadcastId = broadcast ? broadcast.id : '';
+        button.dataset.action = isLive ? 'stop' : 'start';
+        button.classList.toggle('red', isLive);
+        button.classList.toggle('green', !isLive);
+        icon.textContent = isLive ? 'stop' : 'play_arrow';
+        label.textContent = isLive ? 'Arrêter' : 'Lancer';
+
+        let embedSection = box.querySelector('.stream-embed-section');
+        if (isLive) {
+            const embedUrl = `https://www.youtube.com/embed/${broadcast.id}`;
+            if (!embedSection) {
+                embedSection = document.createElement('div');
+                embedSection.className = 'stream-section stream-embed-section';
+                embedSection.innerHTML = '<div class="stream-embed"><iframe allowfullscreen></iframe></div>';
+                box.querySelector('.stream-sections').appendChild(embedSection);
+            }
+            const iframe = embedSection.querySelector('iframe');
+            if (iframe.src !== embedUrl) {
+                iframe.src = embedUrl;
+            }
+        } else if (embedSection) {
+            embedSection.remove();
+        }
+    }
+
+    async function refreshGame(box) {
+        if (!box.querySelector('.stream-status')) {
+            return;
+        }
+        const game = box.dataset.game;
+        const response = await fetch(`/api/streams/${encodeURIComponent(game)}/status/`);
+        if (!response.ok) {
+            return;
+        }
+        renderStatus(box, await response.json());
+    }
+
+    const gameBoxes = document.querySelectorAll('.box[data-game]');
+
+    for (const box of gameBoxes) {
+        const button = box.querySelector('.stream-action-button');
+        if (!button) {
+            continue;
+        }
+        button.addEventListener('click', async () => {
+            const game = box.dataset.game;
+            const action = button.dataset.action;
+            const privacySelect = box.querySelector('.privacy-select');
+            button.disabled = true;
+            try {
+                const response = await fetch(`/api/streams/${encodeURIComponent(game)}/${action}/`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(action === 'start' && privacySelect ? { privacy: privacySelect.value } : {}),
+                });
+                const data = await response.json();
+                if (!response.ok) {
+                    M.toast({html: `Erreur : ${data && data.error ? data.error : response.status}`});
+                } else {
+                    renderStatus(box, data);
+                }
+            } finally {
+                button.disabled = false;
+            }
+        });
+    }
+
+    function refreshAll() {
+        if (document.hidden) {
+            return;
+        }
+        for (const box of gameBoxes) {
+            refreshGame(box);
+        }
+    }
+
+    async function bulkAction(button, action) {
+        button.disabled = true;
+        try {
+            const privacyByGame = {};
+            if (action === 'start') {
+                for (const box of gameBoxes) {
+                    const privacySelect = box.querySelector('.privacy-select');
+                    if (privacySelect) {
+                        privacyByGame[box.dataset.game] = privacySelect.value;
+                    }
+                }
+            }
+            const response = await fetch(`/api/streams/${action}-all/`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(privacyByGame),
+            });
+            const data = await response.json();
+            if (!response.ok) {
+                M.toast({html: `Erreur : ${data && data.error ? data.error : response.status}`});
+            } else {
+                const errors = Object.entries(data).filter(([, error]) => error);
+                if (errors.length) {
+                    M.toast({html: errors.map(([game, error]) => `${game} : ${error}`).join(' — ')});
+                }
+            }
+        } finally {
+            button.disabled = false;
+            refreshAll();
+        }
+    }
+
+    document.getElementById('streams-start-all').addEventListener('click', function () {
+        bulkAction(this, 'start');
+    });
+    document.getElementById('streams-stop-all').addEventListener('click', function () {
+        bulkAction(this, 'stop');
+    });
+
+    document.getElementById('streams-multistream').addEventListener('click', () => {
+        const ids = [...gameBoxes]
+            .map((box) => box.dataset.broadcastId)
+            .filter((id) => id);
+
+        if (!ids.length) {
+            M.toast({html: 'Aucun stream disponible pour le moment.'});
+            return;
+        }
+
+        const url = 'https://multistream.me/' + ids.map((id) => `yt:${id}`).join('/');
+        window.open(url, '_blank', 'noopener');
+    });
+
+    setInterval(refreshAll, 15000);
+    document.addEventListener('visibilitychange', refreshAll);
+});
+</script>
+{% endblock scripts %}
