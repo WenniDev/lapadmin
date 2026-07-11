@@ -1,6 +1,9 @@
+import datetime
+
 import flask
 
 from app import app, private, streams
+from app.db import Opening
 
 
 @private.get("/streams/")
@@ -102,4 +105,40 @@ def api_streams_stop_all():
             results[game_stream.game] = None
         except Exception as e:
             results[game_stream.game] = str(e)
+    return results
+
+
+@private.post("/api/streams/check-auto-start/")
+def api_streams_check_auto_start():
+    """Start all streams for openings that just began and asked for it.
+
+    Polled from the Streams page (see refreshAll in streams.html.j2) rather
+    than from a cron job - only fires while someone has that page open, but
+    needs no extra server-side scheduling infrastructure.
+    """
+    now = datetime.datetime.now()
+    with app.session() as s:
+        pending = (
+            s.query(Opening)
+            .filter(
+                Opening.auto_start_streams.is_(True),
+                Opening.streams_started_at.is_(None),
+                Opening.start <= now,
+                Opening.end >= now,
+            )
+            .all()
+        )
+
+        results = {}
+        for opening in pending:
+            for game_stream in streams.get():
+                try:
+                    game_stream.start_broadcast()
+                    results[game_stream.game] = None
+                except Exception as e:
+                    results[game_stream.game] = str(e)
+            opening.streams_started_at = now
+
+        s.commit()
+
     return results

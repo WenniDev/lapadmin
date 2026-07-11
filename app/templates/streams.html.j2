@@ -395,6 +395,20 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    async function checkAutoStart() {
+        if (document.hidden) {
+            return;
+        }
+        const response = await fetch('/api/streams/check-auto-start/', { method: 'POST' });
+        if (!response.ok) {
+            return;
+        }
+        const data = await response.json();
+        if (Object.keys(data).length) {
+            refreshAll();
+        }
+    }
+
     async function bulkAction(button, action) {
         button.disabled = true;
         try {
@@ -449,6 +463,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     setInterval(refreshAll, 15000);
+    setInterval(checkAutoStart, 15000);
     document.addEventListener('visibilitychange', refreshAll);
 });
 </script>
