@@ -34,4 +34,6 @@ class Opening(Table, Id):
     def day(self):
         return self.start.strftime("%d")
 
-    visits: Column[list["Visit"]] = relation("Visit", back_populates="opening")
+    visits: Column[list["Visit"]] = relation(
+        "Visit", back_populates="opening", cascade="all, delete-orphan"
+    )

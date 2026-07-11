@@ -12,7 +12,9 @@ class Visitor(Table, Id):
     nick: Column[str] = column(nullable=True)
     email: Column[str] = column(nullable=True)
 
-    visits: Column[list["Visit"]] = relation("Visit", back_populates="visitor")
+    visits: Column[list["Visit"]] = relation(
+        "Visit", back_populates="visitor", cascade="all, delete-orphan"
+    )
     payments: Column[list["Payment"]] = relation(
         "Payment", back_populates="visitor"
     )
