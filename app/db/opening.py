@@ -20,6 +20,10 @@ class Opening(Table, Id):
     start: Column[datetime.datetime]
     end: Column[datetime.datetime]
     scope: Column[Scope] = column(default=Scope.PUBLIC)
+    auto_start_streams: Column[bool] = column(default=False)
+    streams_started_at: Column[datetime.datetime | None] = column(
+        nullable=True, default=None
+    )
 
     def __str__(self):
         hour_start = self.start.strftime("%H:%M")

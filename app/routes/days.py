@@ -2,7 +2,7 @@ from datetime import datetime
 
 import flask
 from flask_wtf import FlaskForm
-from wtforms import SelectField, StringField
+from wtforms import BooleanField, SelectField, StringField
 from wtforms.validators import DataRequired
 
 from app import app, private
@@ -31,6 +31,9 @@ class CreateOpeningForm(FlaskForm):
             (scope, label) for scope, label in get_translated_scopes().items()
         ],
     )
+    auto_start_streams = BooleanField(
+        label="Lancer les streams automatiquement"
+    )
 
 
 @private.route("/calendar/<month>/<day>/")
@@ -48,7 +51,10 @@ def calendar_day(month, day):
         )
         with app.session() as s:
             opening = Opening(
-                start=start_date, end=end_date, scope=form.scope.data
+                start=start_date,
+                end=end_date,
+                scope=form.scope.data,
+                auto_start_streams=form.auto_start_streams.data,
             )
             s.add(opening)
             s.commit()
