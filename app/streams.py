@@ -17,6 +17,10 @@ SCOPES = ["https://www.googleapis.com/auth/youtube.force-ssl"]
 CLIENT_SECRET_FILE = "keys/client_secret.json"
 TOKEN_FILE = "keys/token.json"
 
+# YouTube 403 reasons that just mean "the bound stream isn't sending data yet" -
+# not real errors, just not ready to transition to testing/live yet.
+NOT_READY_TRANSITION_REASONS = {"invalidTransition", "errorStreamInactive"}
+
 DATA_DIR = Path("data").resolve()
 
 is_ready = os.path.exists(CLIENT_SECRET_FILE)
@@ -421,7 +425,9 @@ class GameStream(BaseModel):
                 part="status",
             ).execute()
         except HttpError as e:
-            if e.resp.status != 403 or "invalidTransition" not in str(e):
+            if e.resp.status != 403 or not any(
+                reason in str(e) for reason in NOT_READY_TRANSITION_REASONS
+            ):
                 raise
             return broadcast
 
