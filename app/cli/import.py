@@ -1,3 +1,5 @@
+import time
+
 import unidecode
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -76,7 +78,7 @@ def visitors():
     from app.db import Visitor
 
     created = []
-    sheet = gsheet.gc.open("Visiteurs")
+    sheet = gsheet.with_backoff(gsheet.gc.open, "Visiteurs")
     worksheet = sheet.get_worksheet(0)
     print("Got sheet", worksheet)
     expected_headers: list[str] = [
@@ -84,7 +86,10 @@ def visitors():
         for field in SheetVisitor.model_fields.values()
         if field.validation_alias is not None
     ]
-    for row in worksheet.get_all_records(expected_headers=expected_headers):
+    rows = gsheet.with_backoff(
+        worksheet.get_all_records, expected_headers=expected_headers
+    )
+    for row in rows:
         sheet_visitor = SheetVisitor(**row)
         if sheet_visitor.is_empty:
             print("Skipping empty row", row)
@@ -174,16 +179,19 @@ def opening():
         """Process a single spreadsheet and import all its opening worksheets."""
         print(f"\n=== Processing spreadsheet: {sheet_name} ===")
         try:
-            sheet = gsheet.gc.open(sheet_name)
+            sheet = gsheet.with_backoff(gsheet.gc.open, sheet_name)
         except Exception as e:
             print(f"Error opening spreadsheet {sheet_name}: {e}")
             return
 
-        worksheet_list = sheet.worksheets()
+        worksheet_list = gsheet.with_backoff(sheet.worksheets)
         for ws in worksheet_list:
             if not is_opening(ws.title):
                 print("Skipping non-opening sheet", ws.title)
                 continue
+
+            # Stay under the Sheets API per-minute read quota.
+            time.sleep(1.1)
 
             print("Processing opening sheet", ws.title)
             # Don't include "Supplément" as it doesn't exist in older sheets
@@ -214,9 +222,10 @@ def opening():
                     s.commit()
                     print("Created opening", db_opening)
 
-                for row in ws.get_all_records(
-                    head=2, expected_headers=expected_headers
-                ):
+                rows = gsheet.with_backoff(
+                    ws.get_all_records, head=2, expected_headers=expected_headers
+                )
+                for row in rows:
                     sheet_opening = SheetOpening(**row)
                     pseudo = str(sheet_opening.pseudo or "").strip()
                     if not pseudo:
