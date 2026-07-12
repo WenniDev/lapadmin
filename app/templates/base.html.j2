@@ -98,6 +98,10 @@
             padding: 0.5em 1em;
         }
 
+        html.dark-mode {
+            color-scheme: dark;
+        }
+
         html.dark-mode body {
             background: #121212;
             color: #e0e0e0;
@@ -149,11 +153,19 @@
         html.dark-mode input[type="number"],
         html.dark-mode input[type="date"],
         html.dark-mode input[type="search"],
-        html.dark-mode textarea,
-        html.dark-mode select {
+        html.dark-mode textarea {
             color: #e0e0e0;
             border-bottom: 1px solid #666;
             background-color: transparent;
+        }
+
+        html.dark-mode select {
+            color: #e0e0e0;
+            border-bottom: 1px solid #666;
+            /* Chrome renders a native <select>'s option list using its own
+               background-color, so this needs to be opaque (not transparent)
+               for the dropdown itself to come out dark. */
+            background-color: #1e1e1e;
         }
 
         html.dark-mode .input-field label {
