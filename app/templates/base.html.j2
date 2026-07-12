@@ -52,6 +52,54 @@
             transform: none;
         }
 
+        .sidenav-trigger {
+            display: none;
+        }
+
+        #mobile-nav {
+            display: none;
+            list-style: none;
+            margin: 0;
+            padding: 0.5em 0;
+            background-color: #f4f4f4;
+        }
+
+        #mobile-nav li > a {
+            display: block;
+            padding: 0.75em 1.5em;
+            color: #212121;
+        }
+
+        #mobile-nav li > a:active,
+        #mobile-nav li > a:hover {
+            background-color: rgba(0, 0, 0, 0.1);
+        }
+
+        @media screen and (max-width: 700px) {
+            /* Collapse the horizontal nav links below 700px - there isn't
+               room to lay all of them out in a row next to the brand logo,
+               and Materialize's own breakpoint for this (992px) would hide
+               them even on viewports where they still fit fine (e.g. this
+               app's own desktop preview). Rather than an overlay drawer,
+               the menu unfolds from the top and pushes the page down, since
+               it sits in normal document flow right after <nav>. */
+            .sidenav-trigger {
+                display: block;
+            }
+
+            nav .nav-link {
+                display: none;
+            }
+
+            nav .brand-logo {
+                margin-left: 64px;
+            }
+
+            #mobile-nav.open {
+                display: block;
+            }
+        }
+
         code {
             background: #f4f4f4;
             padding: 0.2em 0.4em;
@@ -105,6 +153,19 @@
         html.dark-mode body {
             background: #121212;
             color: #e0e0e0;
+        }
+
+        html.dark-mode #mobile-nav {
+            background-color: #121212;
+        }
+
+        html.dark-mode #mobile-nav li > a {
+            color: #e0e0e0;
+        }
+
+        html.dark-mode #mobile-nav li > a:active,
+        html.dark-mode #mobile-nav li > a:hover {
+            background-color: rgba(255, 255, 255, 0.1);
         }
 
         html.dark-mode a {
@@ -217,13 +278,16 @@
 <body>
     <nav>
         <div class="nav-wrapper container">
+            <a href="#" id="mobile-nav-toggle" class="sidenav-trigger">
+                <i class="material-icons">menu</i>
+            </a>
             <a href="{{ url_for('.index') }}" class="brand-logo">Lapadmin</a>
             <ul class="right">
-                <li><a href="{{ url_for('.calendar_redirect') }}">Calendrier</a></li>
-                <li><a href="{{ url_for('.calendar_day', month=now.format('YYYY-MM'), day=now.format('DD')) }}">Aujourd'hui</a></li>
-                <li><a href="{{ url_for('.visitors') }}">Visiteurs</a></li>
-                <li><a href="{{ url_for('.inventory') }}">Inventaire</a></li>
-                <li><a href="{{ url_for('.streams_page') }}">Streams</a></li>
+                <li class="nav-link"><a href="{{ url_for('.calendar_redirect') }}">Calendrier</a></li>
+                <li class="nav-link"><a href="{{ url_for('.calendar_day', month=now.format('YYYY-MM'), day=now.format('DD')) }}">Aujourd'hui</a></li>
+                <li class="nav-link"><a href="{{ url_for('.visitors') }}">Visiteurs</a></li>
+                <li class="nav-link"><a href="{{ url_for('.inventory') }}">Inventaire</a></li>
+                <li class="nav-link"><a href="{{ url_for('.streams_page') }}">Streams</a></li>
                 <li>
                     <a class="dropdown-trigger" href="#!" data-target="settings-dropdown">
                         <i class="material-icons">settings</i>
@@ -232,6 +296,14 @@
             </ul>
         </div>
     </nav>
+
+    <ul id="mobile-nav">
+        <li><a href="{{ url_for('.calendar_redirect') }}">Calendrier</a></li>
+        <li><a href="{{ url_for('.calendar_day', month=now.format('YYYY-MM'), day=now.format('DD')) }}">Aujourd'hui</a></li>
+        <li><a href="{{ url_for('.visitors') }}">Visiteurs</a></li>
+        <li><a href="{{ url_for('.inventory') }}">Inventaire</a></li>
+        <li><a href="{{ url_for('.streams_page') }}">Streams</a></li>
+    </ul>
 
     <ul id="settings-dropdown" class="dropdown-content">
         <li>
@@ -286,6 +358,17 @@
             });
 
             M.FormSelect.init(document.querySelectorAll('select'));
+
+            const mobileNav = document.getElementById('mobile-nav');
+            document.getElementById('mobile-nav-toggle').addEventListener('click', function(event) {
+                event.preventDefault();
+                mobileNav.classList.toggle('open');
+            });
+            for (const link of mobileNav.querySelectorAll('a')) {
+                link.addEventListener('click', function() {
+                    mobileNav.classList.remove('open');
+                });
+            }
 
             M.Dropdown.init(document.querySelectorAll('.dropdown-trigger'), {
                 constrainWidth: false,
