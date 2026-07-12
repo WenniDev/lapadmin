@@ -1,5 +1,19 @@
 {% extends "base.html.j2" %}
 
+{% block styles %}
+<style>
+    .pay-force-amount-field {
+        margin-bottom: 1em;
+    }
+
+    @media screen and (min-width: 601px) {
+        .pay-force-amount-field {
+            padding-top: 2em;
+        }
+    }
+</style>
+{% endblock styles %}
+
 {% block content %}
 
 <div class="container">
@@ -11,36 +25,36 @@
         {{ form.hidden_tag() }}
 
         <div class="row">
-            <div class="input-field col s6">
+            <div class="input-field col s12 m6">
                 <input type="text" class="autocomplete visitors-input" name="visitor-text">
                 <label>Payeur</label>
             </div>
-            <div class="input-field col s5">
+            <div class="input-field col s12 m5">
                 <label>Item</label>
                 <input type="text" class="autocomplete items-input" name="item-text">
             </div>
-            <div class="input-field col s1">
+            <div class="input-field col s12 m1">
                 <input type="text" name="duration" placeholder="5h12">
                 <label>Durée</label>
             </div>
         </div>
         <div class="row">
-            <div class="input-field col s3">
+            <div class="input-field col s12 m3">
                 {{ form.amount }}
                 <label>Montant (€)</label>
                 <p class="discount"></p>
             </div>
-            <div class="input-field col s2">
+            <div class="col s12 m2 pay-force-amount-field">
                 <label>
                     <input type="checkbox">
                     <span>Forcer un montant</span>
                 </label>
             </div>
-            <div class="input-field col s2">
+            <div class="input-field col s12 m2">
                 {{ form.method }}
                 <label>Méthode</label>
             </div>
-            <div class="input-field col s5">
+            <div class="input-field col s12 m5">
                 <label>Notes</label>
                 {{ form.notes }}
             </div>
