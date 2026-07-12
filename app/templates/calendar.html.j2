@@ -2,8 +2,8 @@
 {% block styles %}
 <style>
     #calendar {
-        width: calc(700px + 2rem);
-        min-width: calc(700px + 2rem);
+        width: 100%;
+        max-width: calc(700px + 2rem);
     }
 
     #calendar-quick-switch {
@@ -55,6 +55,10 @@
     #calendar .past { background: rgb(230, 230, 230) }
     #calendar .opening { background: lightgreen }
 
+    #calendar .cell-weekday {
+        display: none;
+    }
+
     #calendar .today:after {
         content: '';
         position: absolute;
@@ -79,7 +83,63 @@
     }
 
     @media screen and (max-width: 700px) {
-        /* */
+        /* The 7-column grid gets unreadably cramped on narrow screens, so
+           switch to a vertical day-per-row agenda list instead of shrinking
+           it: each week's row stacks its days rather than columning them. */
+        #calendar-weekdays.calendar-row {
+            display: none;
+        }
+
+        #calendar .calendar-row {
+            flex-direction: column;
+        }
+
+        #calendar .calendar-row > .cell {
+            width: 100%;
+        }
+
+        #calendar .cell {
+            height: auto;
+            min-height: 48px;
+            flex-direction: row;
+            align-items: center;
+            gap: 1em;
+            padding: 0.5em 1em;
+        }
+
+        #calendar .cell-date {
+            font-weight: bold;
+            min-width: 1.5em;
+        }
+
+        #calendar .cell-weekday {
+            display: inline;
+            opacity: 0.7;
+            min-width: 4em;
+        }
+
+        #calendar .staffings {
+            flex: 1;
+        }
+
+        #calendar .actions {
+            margin-left: auto;
+        }
+
+        #calendar .today:after {
+            top: -14px;
+            right: -14px;
+            width: 28px;
+            height: 28px;
+        }
+
+        #calendar-title {
+            font-size: 1.3em;
+        }
+
+        #calendar-quick-switch .material-icons {
+            font-size: 2em;
+        }
     }
 </style>
 {% endblock styles %}
@@ -131,6 +191,9 @@
                     "
                     href="{{ url_for('.calendar_day', month=day.date.format('YYYY-MM'), day=day.date.format('DD')) }}"
                 >
+                    <span class="cell-weekday">
+                        {{ day.date.format('dddd') }}
+                    </span>
                     <span class="cell-date">
                         {{ day }}
                     </span>
