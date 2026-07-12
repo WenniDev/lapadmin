@@ -1,4 +1,5 @@
 import datetime
+from concurrent.futures import ThreadPoolExecutor
 
 import flask
 
@@ -6,26 +7,31 @@ from app import app, private, streams
 from app.db import Opening
 
 
+def _load_game_status(game_stream: streams.GameStream) -> dict:
+    live_stream = None
+    broadcast = None
+    error = None
+    try:
+        live_stream = game_stream.find_live_stream()
+        broadcast = game_stream.sync_broadcast_status()
+    except Exception as e:
+        error = str(e)
+    return {
+        "game": game_stream,
+        "live_stream": live_stream,
+        "broadcast": broadcast,
+        "error": error,
+    }
+
+
 @private.get("/streams/")
 def streams_page():
-    games = []
-    for game_stream in streams.get():
-        live_stream = None
-        broadcast = None
-        error = None
-        try:
-            live_stream = game_stream.find_live_stream()
-            broadcast = game_stream.sync_broadcast_status()
-        except Exception as e:
-            error = str(e)
-        games.append(
-            {
-                "game": game_stream,
-                "live_stream": live_stream,
-                "broadcast": broadcast,
-                "error": error,
-            }
-        )
+    game_streams = streams.get()
+    # Each game does its own sequential round of YouTube API calls; running
+    # them in threads overlaps that network I/O across games instead of
+    # summing it, which is what actually makes this page slow to load.
+    with ThreadPoolExecutor(max_workers=len(game_streams) or 1) as executor:
+        games = list(executor.map(_load_game_status, game_streams))
     return app.render("streams", games=games, streams_ready=streams.is_ready)
 
 
