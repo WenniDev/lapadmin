@@ -42,6 +42,47 @@
             transform: none;
         }
 
+        .sidenav-trigger {
+            display: none;
+        }
+
+        #mobile-nav {
+            display: none;
+            list-style: none;
+            margin: 0;
+            padding: 0.5em 0;
+            background-color: #f4f4f4;
+        }
+
+        #mobile-nav li > a {
+            display: block;
+            padding: 0.75em 1.5em;
+            color: #212121;
+        }
+
+        #mobile-nav li > a:active,
+        #mobile-nav li > a:hover {
+            background-color: rgba(0, 0, 0, 0.1);
+        }
+
+        @media screen and (max-width: 700px) {
+            .sidenav-trigger {
+                display: block;
+            }
+
+            nav .nav-link {
+                display: none;
+            }
+
+            nav .brand-logo {
+                margin-left: 64px;
+            }
+
+            #mobile-nav.open {
+                display: block;
+            }
+        }
+
         code {
             background: #f4f4f4;
             padding: 0.2em 0.4em;
@@ -84,14 +125,23 @@
 <body>
     <nav>
         <div class="nav-wrapper container">
+            <a href="#" id="mobile-nav-toggle" class="sidenav-trigger">
+                <i class="material-icons">menu</i>
+            </a>
             <a href="{{ url_for('.index') }}" class="brand-logo">Lapadmin</a>
             <ul class="right">
-                <li><a href="{{ url_for('.calendar_redirect') }}">Calendrier</a></li>
-                <li><a href="{{ url_for('.calendar_day', month=now.format('YYYY-MM'), day=now.format('DD')) }}">Aujourd'hui</a></li>
-                <li><a href="{{ url_for('.visitors') }}">Visiteurs</a></li>
+                <li class="nav-link"><a href="{{ url_for('.calendar_redirect') }}">Calendrier</a></li>
+                <li class="nav-link"><a href="{{ url_for('.calendar_day', month=now.format('YYYY-MM'), day=now.format('DD')) }}">Aujourd'hui</a></li>
+                <li class="nav-link"><a href="{{ url_for('.visitors') }}">Visiteurs</a></li>
             </ul>
         </div>
     </nav>
+
+    <ul id="mobile-nav">
+        <li><a href="{{ url_for('.calendar_redirect') }}">Calendrier</a></li>
+        <li><a href="{{ url_for('.calendar_day', month=now.format('YYYY-MM'), day=now.format('DD')) }}">Aujourd'hui</a></li>
+        <li><a href="{{ url_for('.visitors') }}">Visiteurs</a></li>
+    </ul>
     <div class="container">
         {% for category, message in get_flashed_messages(with_categories=true) %}
         {% macro get_category_class(category) %}
@@ -131,6 +181,17 @@
             });
 
             M.FormSelect.init(document.querySelectorAll('select'));
+
+            const mobileNav = document.getElementById('mobile-nav');
+            document.getElementById('mobile-nav-toggle').addEventListener('click', function(event) {
+                event.preventDefault();
+                mobileNav.classList.toggle('open');
+            });
+            for (const link of mobileNav.querySelectorAll('a')) {
+                link.addEventListener('click', function() {
+                    mobileNav.classList.remove('open');
+                });
+            }
 
             M.Tooltip.init(document.querySelectorAll('.tooltipped'));
 
