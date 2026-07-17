@@ -3,6 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>
+        if (localStorage.getItem('dark-mode') === '1') {
+            document.documentElement.classList.add('dark-mode');
+        }
+    </script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <style>
@@ -78,6 +83,121 @@
             float: right;
             cursor: pointer;
         }
+
+        #settings-dropdown li {
+            padding: 0.5em 1em;
+        }
+
+        html.dark-mode {
+            color-scheme: dark;
+        }
+
+        html.dark-mode body {
+            background: #121212;
+            color: #e0e0e0;
+        }
+
+        html.dark-mode a {
+            color: #80cbc4;
+        }
+
+        html.dark-mode nav {
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        html.dark-mode nav a,
+        html.dark-mode nav .brand-logo {
+            color: #fff;
+        }
+
+        html.dark-mode .widget,
+        html.dark-mode .box,
+        html.dark-mode .card,
+        html.dark-mode .card-panel,
+        html.dark-mode .collection,
+        html.dark-mode .collection .collection-item,
+        html.dark-mode .dropdown-content,
+        html.dark-mode .modal {
+            background: #1e1e1e;
+            color: #e0e0e0;
+        }
+
+        html.dark-mode .dropdown-content li > a,
+        html.dark-mode .dropdown-content li > span {
+            color: #e0e0e0;
+        }
+
+        html.dark-mode .dropdown-content li:hover,
+        html.dark-mode .dropdown-content li.active {
+            background-color: #2a2a2a;
+        }
+
+        html.dark-mode code {
+            background: #2a2a2a;
+            color: #e0e0e0;
+        }
+
+        html.dark-mode input[type="text"],
+        html.dark-mode input[type="password"],
+        html.dark-mode input[type="email"],
+        html.dark-mode input[type="number"],
+        html.dark-mode input[type="date"],
+        html.dark-mode input[type="search"],
+        html.dark-mode textarea {
+            color: #e0e0e0;
+            border-bottom: 1px solid #666;
+            background-color: transparent;
+        }
+
+        html.dark-mode select {
+            color: #e0e0e0;
+            border-bottom: 1px solid #666;
+            background-color: #1e1e1e;
+        }
+
+        html.dark-mode .input-field label {
+            color: #999;
+        }
+
+        html.dark-mode input:disabled,
+        html.dark-mode input[readonly="readonly"] {
+            color: #999 !important;
+            border-bottom: 1px dotted #666 !important;
+        }
+
+        html.dark-mode input:disabled + label,
+        html.dark-mode input[readonly="readonly"] + label {
+            color: #777 !important;
+        }
+
+        html.dark-mode .select-wrapper input.select-dropdown {
+            color: #e0e0e0;
+        }
+
+        html.dark-mode table.striped > tbody > tr:nth-child(odd) {
+            background-color: #262626;
+        }
+
+        html.dark-mode table td,
+        html.dark-mode table th {
+            border-color: #333;
+        }
+
+        html.dark-mode #calendar .cell {
+            border-color: #444;
+        }
+
+        html.dark-mode #calendar .past {
+            background: #262626;
+        }
+
+        html.dark-mode #calendar .opening {
+            background: #2e5d3a;
+        }
+
+        html.dark-mode #calendar .cell:hover {
+            background: #4a3f00;
+        }
     </style>
     {% block styles %}{% endblock %}
 </head>
@@ -89,9 +209,23 @@
                 <li><a href="{{ url_for('.calendar_redirect') }}">Calendrier</a></li>
                 <li><a href="{{ url_for('.calendar_day', month=now.format('YYYY-MM'), day=now.format('DD')) }}">Aujourd'hui</a></li>
                 <li><a href="{{ url_for('.visitors') }}">Visiteurs</a></li>
+                <li>
+                    <a class="dropdown-trigger" href="#!" data-target="settings-dropdown">
+                        <i class="material-icons">settings</i>
+                    </a>
+                </li>
             </ul>
         </div>
     </nav>
+
+    <ul id="settings-dropdown" class="dropdown-content">
+        <li>
+            <label>
+                <input type="checkbox" id="toggle-dark-mode">
+                <span>Mode sombre</span>
+            </label>
+        </li>
+    </ul>
     <div class="container">
         {% for category, message in get_flashed_messages(with_categories=true) %}
         {% macro get_category_class(category) %}
@@ -134,11 +268,28 @@
 
             M.Tooltip.init(document.querySelectorAll('.tooltipped'));
 
+            M.Dropdown.init(document.querySelectorAll('.dropdown-trigger'), {
+                constrainWidth: false,
+                coverTrigger: false,
+                closeOnClick: false,
+            });
+
+            document.getElementById('settings-dropdown').addEventListener('click', function(event) {
+                event.stopPropagation();
+            });
+
             for (let el of document.querySelectorAll('.flash-close')) {
                 el.addEventListener('click', function() {
                     this.parentElement.remove();
                 });
             }
+
+            const darkModeToggle = document.getElementById('toggle-dark-mode');
+            darkModeToggle.checked = document.documentElement.classList.contains('dark-mode');
+            darkModeToggle.addEventListener('change', function() {
+                document.documentElement.classList.toggle('dark-mode', this.checked);
+                localStorage.setItem('dark-mode', this.checked ? '1' : '0');
+            });
         });
     </script>
     {% block scripts %}{% endblock %}
