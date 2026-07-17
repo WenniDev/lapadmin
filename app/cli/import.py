@@ -176,7 +176,6 @@ def opening():
             return None
 
     def process_spreadsheet(sheet_name: str):
-        """Process a single spreadsheet and import all its opening worksheets."""
         print(f"\n=== Processing spreadsheet: {sheet_name} ===")
         try:
             sheet = gsheet.with_backoff(gsheet.gc.open, sheet_name)

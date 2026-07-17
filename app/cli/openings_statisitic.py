@@ -101,7 +101,6 @@ def get_openings(sheet_name: str) -> Opening | None:
 @stats_.command()
 @click.argument("nicknames", nargs=-1, required=False)
 def visits(nicknames: tuple[str]) -> None:
-    """Display all visits for specified users across all openings."""
     if not nicknames:
         nicknames = ("koukidemami", "Hinivir")
 
@@ -167,7 +166,6 @@ def visits(nicknames: tuple[str]) -> None:
 @stats_.command()
 @click.option("--limit", "-n", default=10, help="Number of top visitors to show")
 def top(limit: int) -> None:
-    """Display the top visitors by total time spent (default) or visit count."""
     with app.session() as s:
         visitors = s.query(Visitor).all()
 
@@ -229,10 +227,6 @@ def top(limit: int) -> None:
 @click.argument("month", type=int)
 @click.option("--limit", "-n", default=10, help="Number of top visitors to show")
 def month(year: int, month: int, limit: int) -> None:
-    """Display visitor statistics for a specific month.
-
-    Example: flask stats month 2024 12
-    """
     if month < 1 or month > 12:
         click.echo("Error: Month must be between 1 and 12")
         return
@@ -333,10 +327,6 @@ def month(year: int, month: int, limit: int) -> None:
     help="Sort by: avg time, total time, or visit count",
 )
 def average(min_visits: int, sort_by: str) -> None:
-    """Display average visit duration statistics for all visitors.
-
-    Shows total visits, total time, and average time per visit for each visitor.
-    """
     with app.session() as s:
         visitors = s.query(Visitor).all()
 

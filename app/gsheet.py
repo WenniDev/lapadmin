@@ -18,7 +18,6 @@ except FileNotFoundError as e:
 
 
 def with_backoff(func, *args, max_retries=6, base_delay=10, **kwargs):
-    """Call func, retrying with exponential backoff on quota errors (429)."""
     for attempt in range(max_retries):
         try:
             return func(*args, **kwargs)
