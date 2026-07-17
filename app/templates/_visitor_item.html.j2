@@ -1,8 +1,8 @@
 {% if visitor.nick %}
 <span class="title">{{ visitor.nick }}</span>
 {% if visitor.full_name %}
-<small>({{ visitor.full_name }})</small>
+<small class="personal-info">({{ visitor.full_name }})</small>
 {% endif %}
 {% else %}
-<span class="title">{{ visitor.full_name }}</span>
+<span class="title personal-info">{{ visitor.full_name }}</span>
 {% endif %}

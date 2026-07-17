@@ -6,14 +6,14 @@
     {% if title %}
     <h1>{{ title }}</h1>
     {% elif visitor %}
-    <h1>Éditer <small>{{ visitor }}</small></h1>
+    <h1>Éditer <small>{% include "_visitor_item.html.j2" %}</small></h1>
     {% endif %}
 
     {% include "_form_errors.html.j2" %}
 
     <form method="post" action="." class="widget">
         {{ form.hidden_tag() }}
-        <div class="row">
+        <div class="row personal-info">
             <div class="input-field col s6">
                 {{ form.first_name.label }}
                 {{ form.first_name }}
@@ -28,7 +28,7 @@
                 {{ form.nick.label }}
                 {{ form.nick }}
             </div>
-            <div class="input-field col s6">
+            <div class="input-field col s6 personal-info">
                 {{ form.email.label }}
                 {{ form.email }}
             </div>

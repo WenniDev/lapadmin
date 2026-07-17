@@ -3,6 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>
+        if (localStorage.getItem('hide-personal-info') === '1') {
+            document.documentElement.classList.add('hide-personal-info');
+        }
+    </script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <style>
@@ -78,6 +83,20 @@
             float: right;
             cursor: pointer;
         }
+
+        html.hide-personal-info .personal-info {
+            filter: blur(6px);
+            user-select: none;
+        }
+
+        html.hide-personal-info .personal-info ~ .autocomplete-content {
+            filter: blur(6px);
+            user-select: none;
+        }
+
+        #settings-dropdown li {
+            padding: 0.5em 1em;
+        }
     </style>
     {% block styles %}{% endblock %}
 </head>
@@ -89,9 +108,23 @@
                 <li><a href="{{ url_for('.calendar_redirect') }}">Calendrier</a></li>
                 <li><a href="{{ url_for('.calendar_day', month=now.format('YYYY-MM'), day=now.format('DD')) }}">Aujourd'hui</a></li>
                 <li><a href="{{ url_for('.visitors') }}">Visiteurs</a></li>
+                <li>
+                    <a class="dropdown-trigger" href="#!" data-target="settings-dropdown">
+                        <i class="material-icons">settings</i>
+                    </a>
+                </li>
             </ul>
         </div>
     </nav>
+
+    <ul id="settings-dropdown" class="dropdown-content">
+        <li>
+            <label>
+                <input type="checkbox" id="toggle-hide-personal-info">
+                <span>Cacher les informations personnelles</span>
+            </label>
+        </li>
+    </ul>
     <div class="container">
         {% for category, message in get_flashed_messages(with_categories=true) %}
         {% macro get_category_class(category) %}
@@ -134,11 +167,28 @@
 
             M.Tooltip.init(document.querySelectorAll('.tooltipped'));
 
+            M.Dropdown.init(document.querySelectorAll('.dropdown-trigger'), {
+                constrainWidth: false,
+                coverTrigger: false,
+                closeOnClick: false,
+            });
+
+            document.getElementById('settings-dropdown').addEventListener('click', function(event) {
+                event.stopPropagation();
+            });
+
             for (let el of document.querySelectorAll('.flash-close')) {
                 el.addEventListener('click', function() {
                     this.parentElement.remove();
                 });
             }
+
+            const hidePersonalInfoToggle = document.getElementById('toggle-hide-personal-info');
+            hidePersonalInfoToggle.checked = document.documentElement.classList.contains('hide-personal-info');
+            hidePersonalInfoToggle.addEventListener('change', function() {
+                document.documentElement.classList.toggle('hide-personal-info', this.checked);
+                localStorage.setItem('hide-personal-info', this.checked ? '1' : '0');
+            });
         });
     </script>
     {% block scripts %}{% endblock %}
